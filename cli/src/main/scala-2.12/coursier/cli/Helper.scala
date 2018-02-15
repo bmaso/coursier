@@ -17,7 +17,7 @@ import coursier.util.{Parse, Print}
 import scala.annotation.tailrec
 import scala.concurrent.duration.Duration
 import scalaz.concurrent.{Strategy, Task}
-import scalaz.{-\/, Failure, Nondeterminism, Success, \/-}
+import scalaz.{Failure, Nondeterminism, Success}
 
 
 object Helper {
@@ -183,14 +183,14 @@ class Helper(
 
       logger.foreach(_.stop())
 
-      val errors = res.collect { case -\/(err) => err }
+      val errors = res.collect { case Left(err) => err }
 
       prematureExitIf(errors.nonEmpty) {
         s"Error getting scaladex infos:\n" + errors.map("  " + _).mkString("\n")
       }
 
       res
-        .collect { case \/-(l) => l }
+        .collect { case Right(l) => l }
         .flatten
         .map { case (mod, ver) => Dependency(mod, ver) }
     }
@@ -619,7 +619,7 @@ class Helper(
 
     val (ignoredErrors, errors) = results
       .collect {
-        case (artifact, -\/(err)) =>
+        case (artifact, Left(err)) =>
           artifact -> err
       }
       .partition {
@@ -632,7 +632,7 @@ class Helper(
       }
 
     val artifactToFile = results.collect {
-      case (artifact: Artifact, \/-(f)) =>
+      case (artifact: Artifact, Right(f)) =>
         (artifact.url, f)
     }.toMap
 
